@@ -28,22 +28,13 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.displayMonogame = new CustomControls.Display();
             this.buttonReset = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
             this.labelMessage = new System.Windows.Forms.Label();
+            this.displayMonogame = new CustomControls.Display();
+            this.buttonUndo = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // displayMonogame
-            // 
-            this.displayMonogame.Location = new System.Drawing.Point(12, 12);
-            this.displayMonogame.Name = "displayMonogame";
-            this.displayMonogame.ParentForm = null;
-            this.displayMonogame.Size = new System.Drawing.Size(1014, 1016);
-            this.displayMonogame.TabIndex = 0;
-            this.displayMonogame.Text = "displayMonogame";
-            this.displayMonogame.MouseClick += new System.Windows.Forms.MouseEventHandler(this.displayMonogame_MouseClick);
             // 
             // buttonReset
             // 
@@ -74,11 +65,32 @@
             this.labelMessage.TabIndex = 0;
             this.labelMessage.Text = "XXXXX";
             // 
+            // displayMonogame
+            // 
+            this.displayMonogame.Location = new System.Drawing.Point(12, 12);
+            this.displayMonogame.Name = "displayMonogame";
+            this.displayMonogame.ParentForm = null;
+            this.displayMonogame.Size = new System.Drawing.Size(1014, 1016);
+            this.displayMonogame.TabIndex = 0;
+            this.displayMonogame.Text = "displayMonogame";
+            this.displayMonogame.MouseClick += new System.Windows.Forms.MouseEventHandler(this.displayMonogame_MouseClick);
+            // 
+            // buttonUndo
+            // 
+            this.buttonUndo.Location = new System.Drawing.Point(1222, 15);
+            this.buttonUndo.Name = "buttonUndo";
+            this.buttonUndo.Size = new System.Drawing.Size(144, 38);
+            this.buttonUndo.TabIndex = 3;
+            this.buttonUndo.Text = "Undo last move";
+            this.buttonUndo.UseVisualStyleBackColor = true;
+            this.buttonUndo.Click += new System.EventHandler(this.buttonUndo_Click);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1904, 1041);
+            this.Controls.Add(this.buttonUndo);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.buttonReset);
             this.Controls.Add(this.displayMonogame);
@@ -97,5 +109,6 @@
         private System.Windows.Forms.Button buttonReset;
         private System.Windows.Forms.Panel panel1;
         internal System.Windows.Forms.Label labelMessage;
+        private System.Windows.Forms.Button buttonUndo;
     }
 }

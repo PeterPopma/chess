@@ -29,9 +29,15 @@ namespace Chess.CustomControls
         ChessboardPosition squarePosition = new ChessboardPosition();
         ChessboardPosition squareSelected = new ChessboardPosition();
         ChessboardPosition squarePossible = new ChessboardPosition();
+        ChessboardPosition previousPositionFrom;
+        ChessboardPosition previousPositionTo;
+        ChessPiece previousPieceFrom;
+        ChessPiece previousPieceTo;
         List<ChessboardPosition> possibleMoves = new List<ChessboardPosition>();
         ChessPiece[,] chessBoard = new ChessPiece[8, 8];
-        int activePlayer;
+        bool activePlayer;
+        const bool PlayerWhite = true;
+        const bool PlayerBlack = false;
 
         SpriteBatch spriteBatch;
 
@@ -56,6 +62,14 @@ namespace Chess.CustomControls
         private void MouseWheelHandler(object sender, MouseEventArgs e)
         {
             scrollWheelValue += e.Delta;
+        }
+
+        public void UndoLastMove()
+        {
+            chessBoard[previousPositionTo.X, previousPositionTo.Y] = previousPieceTo;
+            chessBoard[previousPositionFrom.X, previousPositionFrom.Y] = previousPieceFrom;
+            NextPlayer();
+            UpdateMessage();
         }
 
         protected override void Initialize()
@@ -145,7 +159,8 @@ namespace Chess.CustomControls
             chessBoard[6, 7] = new ChessPiece(ChessPieceType.Horse, ChessPieceColor.White);
             chessBoard[7, 7] = new ChessPiece(ChessPieceType.Rook, ChessPieceColor.White);
 
-            activePlayer = 0;
+            activePlayer = PlayerWhite;
+            UpdateMessage();
         }
 
         BlendState BlendStateSelection = new BlendState()
@@ -367,55 +382,102 @@ namespace Chess.CustomControls
             return false;
         }
 
+        List<ChessboardPosition> ValidateMovesInCheck(List<ChessboardPosition> moves, ChessboardPosition startPosition, bool isWhite)
+        {
+            List<ChessboardPosition> validMoves = new List<ChessboardPosition>();
+            foreach(ChessboardPosition position in moves)
+            {
+                if (!MoveInCheck(startPosition, position))
+                    validMoves.Add(position);
+            }
+
+            return validMoves;
+        }
+
+        List<ChessboardPosition> CheckCastling(ChessboardPosition position, bool isWhite)
+        {
+            List<ChessboardPosition> moves = new List<ChessboardPosition>();
+
+            ChessPiece piece = chessBoard[position.X, position.Y];
+            if (!piece.HasMoved)
+            {
+                if (isWhite)
+                {
+                    if (chessBoard[0, 7].Type.Equals(ChessPieceType.Rook)
+                        && !chessBoard[0, 7].HasMoved
+                        && chessBoard[1, 7].IsNone
+                        && chessBoard[2, 7].IsNone
+                        && chessBoard[3, 7].IsNone)
+                    {
+                        if (!MoveInCheck(position, new ChessboardPosition(position.X, position.Y)) &&
+                            !MoveInCheck(position, new ChessboardPosition(position.X - 1, position.Y)) &&
+                            !MoveInCheck(position, new ChessboardPosition(position.X - 2, position.Y)))
+                        {
+                            moves.Add(new ChessboardPosition(position.X - 2, position.Y));
+                        }
+                    }
+                    if (chessBoard[7, 7].Type.Equals(ChessPieceType.Rook)
+                        && !chessBoard[7, 7].HasMoved
+                        && chessBoard[5, 7].IsNone
+                        && chessBoard[6, 7].IsNone)
+                    {
+                        if (!MoveInCheck(position, new ChessboardPosition(position.X, position.Y)) &&
+                            !MoveInCheck(position, new ChessboardPosition(position.X + 1, position.Y)) &&
+                            !MoveInCheck(position, new ChessboardPosition(position.X + 2, position.Y)))
+                        {
+                            moves.Add(new ChessboardPosition(position.X + 2, position.Y));
+                        }
+                    }
+                }
+                else
+                {
+                    if (chessBoard[0, 0].Type.Equals(ChessPieceType.Rook)
+                        && !chessBoard[0, 0].HasMoved
+                        && chessBoard[1, 0].IsNone
+                        && chessBoard[2, 0].IsNone
+                        && chessBoard[3, 0].IsNone)
+                    {
+                        if (!MoveInCheck(position, new ChessboardPosition(position.X, position.Y)) &&
+                            !MoveInCheck(position, new ChessboardPosition(position.X - 1, position.Y)) &&
+                            !MoveInCheck(position, new ChessboardPosition(position.X - 2, position.Y)))
+                        {
+                            moves.Add(new ChessboardPosition(position.X - 2, position.Y));
+                        }
+                    }
+                    if (chessBoard[7, 0].Type.Equals(ChessPieceType.Rook)
+                        && !chessBoard[7, 0].HasMoved
+                        && chessBoard[5, 0].IsNone
+                        && chessBoard[6, 0].IsNone)
+                    {
+                        if (!MoveInCheck(position, new ChessboardPosition(position.X, position.Y)) &&
+                            !MoveInCheck(position, new ChessboardPosition(position.X + 1, position.Y)) &&
+                            !MoveInCheck(position, new ChessboardPosition(position.X + 2, position.Y)))
+                        {
+                            moves.Add(new ChessboardPosition(position.X + 2, position.Y));
+                        }
+                    }
+                }
+            }
+
+            return moves;
+        }
+
         List<ChessboardPosition> checkKingMoves(ChessboardPosition position, bool isWhite)
         {
             List<ChessboardPosition> moves = new List<ChessboardPosition>();
             for (int x = position.X - 1; x <= position.X + 1; x++)
             {
-                if (CheckMove(x, position.Y - 1, isWhite) && !MoveInCheck(position, new ChessboardPosition(x, position.Y - 1)))
+                if (CheckMove(x, position.Y - 1, isWhite))
                 {
                     moves.Add(new ChessboardPosition(x, position.Y - 1));
                 }
-                if (x != position.X && CheckMove(x, position.Y, isWhite) && !MoveInCheck(position, new ChessboardPosition(x, position.Y)))
+                if (x != position.X && CheckMove(x, position.Y, isWhite))
                 {
                     moves.Add(new ChessboardPosition(x, position.Y));
                 }
-                if (CheckMove(x, position.Y + 1, isWhite) && !MoveInCheck(position, new ChessboardPosition(x, position.Y + 1)))
+                if (CheckMove(x, position.Y + 1, isWhite))
                 {
                     moves.Add(new ChessboardPosition(x, position.Y + 1));
-                }
-                // Check castling
-                ChessPiece piece = chessBoard[position.X, position.Y];
-                if (!piece.HasMoved)
-                {
-                    if (isWhite)
-                    {
-                        if (chessBoard[0, 7].Type.Equals(ChessPieceType.Rook)
-                            && !chessBoard[0, 7].HasMoved
-                            && chessBoard[1, 7].IsNone
-                            && chessBoard[2, 7].IsNone
-                            && chessBoard[3, 7].IsNone)
-                        {
-                            if (!MoveInCheck(position, new ChessboardPosition(position.X, position.Y)) &&
-                                !MoveInCheck(position, new ChessboardPosition(position.X - 1, position.Y)) &&
-                                !MoveInCheck(position, new ChessboardPosition(position.X - 2, position.Y)))
-                            {
-                                moves.Add(new ChessboardPosition(position.X - 2, position.Y));
-                            }
-                        }
-                        if (chessBoard[7, 7].Type.Equals(ChessPieceType.Rook)
-                            && !chessBoard[7, 7].HasMoved
-                            && chessBoard[5, 7].IsNone
-                            && chessBoard[6, 7].IsNone)
-                        {
-                            if (!MoveInCheck(position, new ChessboardPosition(position.X, position.Y)) &&
-                                !MoveInCheck(position, new ChessboardPosition(position.X + 1, position.Y)) &&
-                                !MoveInCheck(position, new ChessboardPosition(position.X + 2, position.Y)))
-                            {
-                                moves.Add(new ChessboardPosition(position.X + 2, position.Y));
-                            }
-                        }
-                    }
                 }
             }
             return moves;
@@ -426,7 +488,7 @@ namespace Chess.CustomControls
             List<ChessboardPosition> moves = new List<ChessboardPosition>();
             if (isWhite)
             {
-                if (CheckMove(position.X, position.Y - 1, isWhite))
+                if (CheckMove(position.X, position.Y - 1, isWhite) && !chessBoard[position.X, position.Y - 1].IsBlack)
                 {
                     moves.Add(new ChessboardPosition(position.X, position.Y - 1));
                 }
@@ -438,14 +500,14 @@ namespace Chess.CustomControls
                 {
                     moves.Add(new ChessboardPosition(position.X - 1, position.Y - 1));
                 }
-                if (position.Y == 6 && CheckMove(position.X, position.Y - 2, isWhite) && chessBoard[position.X, position.Y - 1].IsNone)
+                if (position.Y == 6 && CheckMove(position.X, position.Y - 2, isWhite) && !chessBoard[position.X, position.Y - 2].IsBlack && chessBoard[position.X, position.Y - 1].IsNone)
                 {
                     moves.Add(new ChessboardPosition(position.X, position.Y - 2));
                 }
             }
             else
             {
-                if (CheckMove(position.X, position.Y + 1, isWhite))
+                if (CheckMove(position.X, position.Y + 1, isWhite) && !chessBoard[position.X, position.Y + 1].IsWhite)
                 {
                     moves.Add(new ChessboardPosition(position.X, position.Y + 1));
                 }
@@ -457,7 +519,7 @@ namespace Chess.CustomControls
                 {
                     moves.Add(new ChessboardPosition(position.X - 1, position.Y + 1));
                 }
-                if (position.Y == 1 && CheckMove(position.X, position.Y + 2, isWhite) && chessBoard[position.X, position.Y + 1].IsNone)
+                if (position.Y == 1 && CheckMove(position.X, position.Y + 2, isWhite) && !chessBoard[position.X, position.Y + 2].IsWhite && chessBoard[position.X, position.Y + 1].IsNone)
                 {
                     moves.Add(new ChessboardPosition(position.X, position.Y + 2));
                 }
@@ -607,7 +669,7 @@ namespace Chess.CustomControls
             return moves;
         }
 
-        List<ChessboardPosition> CheckPossibleMoves(ChessboardPosition position, bool IncludeKing = true)
+        List<ChessboardPosition> CheckPossibleMoves(ChessboardPosition position)
         {
             List<ChessboardPosition> moves = new List<ChessboardPosition>();
             ChessPiece piece = chessBoard[position.X, position.Y];
@@ -628,10 +690,7 @@ namespace Chess.CustomControls
                     moves.AddRange(checkBishopMoves(position, piece.IsWhite));
                     break;
                 case "King":
-                    if (IncludeKing)
-                    {
-                        moves = checkKingMoves(position, piece.IsWhite);       // the check for king includes CheckPossibleMoves(), so must be skipped
-                    }
+                    moves = checkKingMoves(position, piece.IsWhite);
                     break;
                 case "Pawn":
                     moves = checkPawnMoves(position, piece.IsWhite);
@@ -641,7 +700,7 @@ namespace Chess.CustomControls
             return moves;
         }
 
-        bool IsCheck(ChessboardPosition position, bool isWhite)
+        bool IsCheck(ChessboardPosition kingPosition, bool isWhite)
         {
             bool isCheck = false;
 
@@ -649,26 +708,12 @@ namespace Chess.CustomControls
             {
                 for (int x = 0; x < 8; x++)
                 {
-                    if (isWhite)
+                    if (!chessBoard[x, y].Type.Equals(ChessPieceType.King) && ((isWhite && chessBoard[x, y].IsBlack) || (!isWhite && chessBoard[x, y].IsWhite)))
                     {
-                        if (chessBoard[x, y].IsBlack)
+                        List<ChessboardPosition> moves = CheckPossibleMoves(new ChessboardPosition(x, y));
+                        if (moves.Exists(obj => obj.X == kingPosition.X && obj.Y == kingPosition.Y))
                         {
-                            List<ChessboardPosition> moves = CheckPossibleMoves(new ChessboardPosition(x, y), false);
-                            if (moves.Exists(obj => obj.X == position.X && obj.Y == position.Y))
-                            {
-                                isCheck = true;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (chessBoard[x, y].IsWhite)
-                        {
-                            List<ChessboardPosition> moves = CheckPossibleMoves(new ChessboardPosition(x, y), false);
-                            if (moves.Exists(obj => obj.X == position.X && obj.Y == position.Y))
-                            {
-                                isCheck = true;
-                            }
+                            isCheck = true;
                         }
                     }
                 }
@@ -696,8 +741,70 @@ namespace Chess.CustomControls
             return IsCheck(position, isWhite);
         }
 
+        int CountPieces(ChessPieceType type, bool isWhite)
+        {
+            int count = 0;
+
+            for (int y = 0; y < 8; y++)
+            {
+                for (int x = 0; x < 8; x++)
+                {
+                    if (chessBoard[x, y].Type.Equals(type) && chessBoard[x, y].IsWhite == isWhite)
+                    {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        void PromotePawn(ChessboardPosition position, bool isWhite)
+        {
+            if(CountPieces(ChessPieceType.Queen, isWhite)==0)
+            {
+                chessBoard[position.X, position.Y].Type = ChessPieceType.Queen;
+                return;
+            }
+            if (CountPieces(ChessPieceType.Rook, isWhite) < 2)
+            {
+                chessBoard[position.X, position.Y].Type = ChessPieceType.Rook;
+                return;
+            }
+            if (CountPieces(ChessPieceType.Bishop, isWhite) < 2)
+            {
+                chessBoard[position.X, position.Y].Type = ChessPieceType.Bishop;
+                return;
+            }
+            if (CountPieces(ChessPieceType.Horse, isWhite) < 2)
+            {
+                chessBoard[position.X, position.Y].Type = ChessPieceType.Horse;
+                return;
+            }
+        }
+
+        void CheckPawnPromotion(bool isWhite)
+        {
+            for (int x = 0; x < 8; x++)
+            {
+                if(isWhite)
+                {
+                    if(chessBoard[x, 0].Type.Equals(ChessPieceType.Pawn) && chessBoard[x, 0].IsWhite)
+                    {
+                        PromotePawn(new ChessboardPosition(x, 0), isWhite);
+                    }
+                }
+                else
+                {
+                    if (chessBoard[x, 7].Type.Equals(ChessPieceType.Pawn) && chessBoard[x, 0].IsBlack)
+                    {
+                        PromotePawn(new ChessboardPosition(x, 7), isWhite);
+                    }
+                }
+            }
+        }
+
         // Check all possible moves; if none -> checkmate!
-        bool IsCheckMate(bool isWhite)
+        bool IsCheckMate()
         {
             List<ChessboardPosition> moves = new List<ChessboardPosition>();
 
@@ -705,19 +812,18 @@ namespace Chess.CustomControls
             {
                 for (int x = 0; x < 8; x++)
                 {
-                    if (!chessBoard[x, y].Type.Equals(ChessPieceType.None) && chessBoard[x, y].IsWhite == isWhite)
+                    if (!chessBoard[x, y].Type.Equals(ChessPieceType.None) && chessBoard[x, y].IsWhite == activePlayer)
                     {
                         ChessboardPosition position = new ChessboardPosition(x, y);
-                        ChessPiece pieceSelected = chessBoard[position.X, position.Y];
-                        if (pieceSelected.Type.Equals(ChessPieceType.King) || !MoveInCheck(position)) // not possible to move piece, because it would mean check
+                        if(FindPossibleMoves(position).Count>0)
                         {
-                            moves.AddRange(CheckPossibleMoves(position));
+                            return false;
                         }
                     }
                 }
             }
 
-            return moves.Count == 0;
+            return true;
         }
 
         // Check if this is removed, the player would be in check
@@ -757,7 +863,7 @@ namespace Chess.CustomControls
 
         bool IsOwnPiece(ChessPiece piece)
         {
-            return (activePlayer == 0 && piece.IsWhite) || (activePlayer == 1 && piece.IsBlack);
+            return (activePlayer == PlayerWhite && piece.IsWhite) || (activePlayer == PlayerBlack && piece.IsBlack);
         }
 
         void UpdateSelectionSquare()
@@ -765,23 +871,20 @@ namespace Chess.CustomControls
             squarePossible.setNone();
             if (!squarePosition.IsNone)
             {
-                ChessPiece pieceSelected = chessBoard[squarePosition.X, squarePosition.Y];
-                if (pieceSelected.Type.Equals(ChessPieceType.King) || !MoveInCheck(squarePosition)) // not possible to move piece, because it would mean check
+                if (FindPossibleMoves(squarePosition).Count>0)
                 {
-                    if (IsOwnPiece(pieceSelected) && CheckPossibleMoves(squarePosition).Count > 0)
-                    {
-                        squarePossible.CopyValuesFrom(squarePosition);
-                    }
+                    squarePossible.CopyValuesFrom(squarePosition);
                 }
             }
         }
 
         void MakeMove()
         {
+            ChessPiece selectedPiece = chessBoard[squareSelected.X, squareSelected.Y];
             // Check for castling and move rook
-            if (chessBoard[squareSelected.X, squareSelected.Y].Type.Equals(ChessPieceType.King))
+            if (selectedPiece.Type.Equals(ChessPieceType.King))
             {
-                if (chessBoard[squareSelected.X, squareSelected.Y].IsWhite)
+                if (selectedPiece.IsWhite)
                 {
                     if (squareSelected.X == 4 && squareSelected.Y == 7 && squarePosition.X == 2 && squarePosition.Y == 7)
                     {
@@ -812,19 +915,26 @@ namespace Chess.CustomControls
                     }
                 }
             }
-            chessBoard[squarePosition.X, squarePosition.Y] = chessBoard[squareSelected.X, squareSelected.Y];
-            chessBoard[squarePosition.X, squarePosition.Y].HasMoved = true;
+            previousPositionFrom = new ChessboardPosition(squarePosition.X, squarePosition.Y);
+            previousPositionTo = new ChessboardPosition(squareSelected.X, squareSelected.Y);
+            previousPieceFrom = chessBoard[squarePosition.X, squarePosition.Y];
+            previousPieceTo = new ChessPiece(selectedPiece.Type, selectedPiece.Color, selectedPiece.HasMoved);
+
+            selectedPiece.HasMoved = true;
+            chessBoard[squarePosition.X, squarePosition.Y] = selectedPiece;
             chessBoard[squareSelected.X, squareSelected.Y] = new ChessPiece();
-            activePlayer++;
-            if (activePlayer>1)
-            {
-                activePlayer = 0;
-            }
-            if (IsCheckMate(activePlayer == 0))
+            CheckPawnPromotion(activePlayer);
+            NextPlayer();
+            UpdateMessage();
+        }
+
+        void UpdateMessage()
+        {
+            if (IsCheckMate())
             {
                 parentForm.labelMessage.Text = "Checkmate!";
             }
-            else if ((activePlayer == 0 && IsCheck(true)) || (activePlayer == 1 && IsCheck(false)))
+            else if (IsCheck(activePlayer))
             {
                 parentForm.labelMessage.Text = "Check!";
             }
@@ -834,23 +944,38 @@ namespace Chess.CustomControls
             }
         }
 
+        void NextPlayer()
+        {
+            activePlayer = !activePlayer;
+        }
+
+        List<ChessboardPosition> FindPossibleMoves(ChessboardPosition position)
+        {
+            List<ChessboardPosition> possibleMoves = new List<ChessboardPosition>();
+            ChessPiece pieceSelected = chessBoard[position.X, position.Y];
+            if (IsOwnPiece(pieceSelected))
+            {
+                possibleMoves = CheckPossibleMoves(position);
+                possibleMoves = ValidateMovesInCheck(possibleMoves, position, pieceSelected.IsWhite);
+                if (pieceSelected.Type.Equals(ChessPieceType.King))
+                {
+                    possibleMoves.AddRange(CheckCastling(position, pieceSelected.IsWhite));
+                }
+            }
+
+            return possibleMoves;
+        }
+
         public void OnClick(int X, int Y)
         {
             if (!squarePosition.IsNone)
             {
                 if (squareSelected.IsNone)
                 {
-                    ChessPiece pieceSelected = chessBoard[squarePosition.X, squarePosition.Y];
-                    if (IsOwnPiece(pieceSelected))
+                    possibleMoves = FindPossibleMoves(squarePosition);
+                    if (possibleMoves.Count > 0)
                     {
-                        if (pieceSelected.Type.Equals(ChessPieceType.King) || !MoveInCheck(squarePosition)) // not possible to move piece, because it would mean check
-                        {
-                            possibleMoves = CheckPossibleMoves(squarePosition);
-                            if (possibleMoves.Count > 0)
-                            {
-                                squareSelected.CopyValuesFrom(squarePosition);
-                            }
-                        }
+                        squareSelected.CopyValuesFrom(squarePosition);
                     }
                 }
                 else
@@ -874,12 +999,9 @@ namespace Chess.CustomControls
             lastKeyboardState = currentKeyboardState;
             lastGamePadState = currentGamePadState;
             lastScrollWheelValue = scrollWheelValue;
-            if (MousePosition.X > 49 && MousePosition.Y > 71 && MousePosition.X < 1009 && MousePosition.Y < 1031)
-            {
-                squarePosition.X = (MousePosition.X - 49) / 120;
-                squarePosition.Y = (MousePosition.Y - 71) / 120;
-            }
-            else
+            squarePosition.X = (MousePosition.X - 49) / 120;
+            squarePosition.Y = (MousePosition.Y - 71) / 120;
+            if(squarePosition.X<0 || squarePosition.Y < 0 || squarePosition.X >7 || squarePosition.Y > 7)
             {
                 squarePosition.setNone();
             }

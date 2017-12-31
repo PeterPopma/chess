@@ -50,5 +50,10 @@ namespace Chess.Forms
         {
             displayMonogame.InitGame();
         }
+
+        private void buttonUndo_Click(object sender, EventArgs e)
+        {
+            displayMonogame.UndoLastMove();
+        }
     }
 }

@@ -25,10 +25,11 @@ namespace Chess.Chess
         internal ChessPieceColor Color { get => color; set => color = value; }
         public bool HasMoved { get => hasMoved; set => hasMoved = value; }
 
-        public ChessPiece(ChessPieceType type = ChessPieceType.None, ChessPieceColor color = ChessPieceColor.None)
+        public ChessPiece(ChessPieceType type = ChessPieceType.None, ChessPieceColor color = ChessPieceColor.None, bool hasMoved=false)
         {
             this.Type = type;
             this.Color = color;
+            this.hasMoved = hasMoved;
         }
 
     }
