@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27004.2002
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess", "Chess\Chess.csproj", "{A35DC26A-469E-4FC6-94C0-B0650B7A7ABC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess", "Chess\Chess.csproj", "{22F6AB5B-0455-4B8E-A08D-853DE97CAF75}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,20 +13,13 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A35DC26A-469E-4FC6-94C0-B0650B7A7ABC}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{A35DC26A-469E-4FC6-94C0-B0650B7A7ABC}.Debug|Any CPU.Build.0 = Debug|x86
-		{A35DC26A-469E-4FC6-94C0-B0650B7A7ABC}.Debug|x86.ActiveCfg = Debug|x86
-		{A35DC26A-469E-4FC6-94C0-B0650B7A7ABC}.Debug|x86.Build.0 = Debug|x86
-		{A35DC26A-469E-4FC6-94C0-B0650B7A7ABC}.Release|Any CPU.ActiveCfg = Release|x86
-		{A35DC26A-469E-4FC6-94C0-B0650B7A7ABC}.Release|x86.ActiveCfg = Release|x86
-		{A35DC26A-469E-4FC6-94C0-B0650B7A7ABC}.Release|x86.Build.0 = Release|x86
-		{CE009BFA-5EF6-4153-B2A1-2FA79698A9AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CE009BFA-5EF6-4153-B2A1-2FA79698A9AE}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{CE009BFA-5EF6-4153-B2A1-2FA79698A9AE}.Debug|x86.Build.0 = Debug|Any CPU
-		{CE009BFA-5EF6-4153-B2A1-2FA79698A9AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CE009BFA-5EF6-4153-B2A1-2FA79698A9AE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CE009BFA-5EF6-4153-B2A1-2FA79698A9AE}.Release|x86.ActiveCfg = Release|Any CPU
-		{CE009BFA-5EF6-4153-B2A1-2FA79698A9AE}.Release|x86.Build.0 = Release|Any CPU
+		{22F6AB5B-0455-4B8E-A08D-853DE97CAF75}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{22F6AB5B-0455-4B8E-A08D-853DE97CAF75}.Debug|Any CPU.Build.0 = Debug|x86
+		{22F6AB5B-0455-4B8E-A08D-853DE97CAF75}.Debug|x86.ActiveCfg = Debug|x86
+		{22F6AB5B-0455-4B8E-A08D-853DE97CAF75}.Debug|x86.Build.0 = Debug|x86
+		{22F6AB5B-0455-4B8E-A08D-853DE97CAF75}.Release|Any CPU.ActiveCfg = Release|x86
+		{22F6AB5B-0455-4B8E-A08D-853DE97CAF75}.Release|x86.ActiveCfg = Release|x86
+		{22F6AB5B-0455-4B8E-A08D-853DE97CAF75}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

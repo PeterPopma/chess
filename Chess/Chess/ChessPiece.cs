@@ -7,7 +7,7 @@ using Chess.CustomControls;
 
 namespace Chess.Chess
 {
-    class ChessPiece
+    public class ChessPiece
     {
         public enum ChessPieceType { None, Pawn, Rook, Horse, Bishop, Queen, King };
         public enum ChessPieceColor { None, White, Black };

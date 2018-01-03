@@ -1,4 +1,6 @@
-﻿namespace Chess.Forms
+﻿using Chess.CustomControls;
+
+namespace Chess.Forms
 {
     partial class FormMain
     {
@@ -110,5 +112,7 @@
         private System.Windows.Forms.Panel panel1;
         internal System.Windows.Forms.Label labelMessage;
         private System.Windows.Forms.Button buttonUndo;
+
+        public Display DisplayMonogame { get => displayMonogame; set => displayMonogame = value; }
     }
 }
