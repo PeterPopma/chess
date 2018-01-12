@@ -244,10 +244,6 @@ namespace Chess.CustomControls
 
                 if (possibleMoves.Count > 0)
                 {
-                    if (squarePosition.X == 0)
-                    {
-                        int pp = 0;
-                    }
                     if (possibleMoves.Exists(obj => obj.X == squarePosition.X && obj.Y == squarePosition.Y))
                     {
                         spriteBatch.Draw(textureSelect, new Rectangle(29 + (squarePosition.X) * 120, 29 + (squarePosition.Y) * 120, textureSelect.Width, textureSelect.Height), Color.White);
@@ -670,6 +666,11 @@ namespace Chess.CustomControls
             return moves;
         }
 
+        public List<ChessboardPosition> CheckPossibleMoves(int x, int y)
+        {
+            return CheckPossibleMoves(new ChessboardPosition(x,y));
+        }
+
         List<ChessboardPosition> CheckPossibleMoves(ChessboardPosition position)
         {
             List<ChessboardPosition> moves = new List<ChessboardPosition>();
@@ -709,7 +710,7 @@ namespace Chess.CustomControls
             {
                 for (int x = 0; x < 8; x++)
                 {
-                    if (!ChessBoard[x, y].Type.Equals(ChessPieceType.King) && ((isWhite && ChessBoard[x, y].IsBlack) || (!isWhite && ChessBoard[x, y].IsWhite)))
+                    if (/*!ChessBoard[x, y].Type.Equals(ChessPieceType.King) &&*/ ((isWhite && ChessBoard[x, y].IsBlack) || (!isWhite && ChessBoard[x, y].IsWhite)))
                     {
                         List<ChessboardPosition> moves = CheckPossibleMoves(new ChessboardPosition(x, y));
                         if (moves.Exists(obj => obj.X == kingPosition.X && obj.Y == kingPosition.Y))
@@ -804,6 +805,29 @@ namespace Chess.CustomControls
             }
         }
 
+        public List<ChessboardPosition> GetMoveablePositions()
+        {
+            List<ChessboardPosition> pieces = new List<ChessboardPosition>(); ;
+
+            for (int y = 0; y < 8; y++)
+            {
+                for (int x = 0; x < 8; x++)
+                {
+                    if (!ChessBoard[x, y].Type.Equals(ChessPieceType.None) && ChessBoard[x, y].IsWhite == ActivePlayer)
+                    {
+                        ChessboardPosition position = new ChessboardPosition(x, y);
+                        if (FindPossibleMoves(position).Count > 0)
+                        {
+                            pieces.Add(new ChessboardPosition(x, y));
+                        }
+                    }
+                }
+            }
+
+            return pieces;
+        }
+       
+
         // Check all possible moves; if none -> checkmate!
         bool IsCheckMate()
         {
@@ -877,6 +901,26 @@ namespace Chess.CustomControls
                     squarePossible.CopyValuesFrom(squarePosition);
                 }
             }
+        }
+
+        public string MakeMove(int xfrom, int yfrom, int xto, int yto)
+        {
+            squareSelected = new ChessboardPosition(xfrom, yfrom);
+            possibleMoves = FindPossibleMoves(squareSelected);
+            if (possibleMoves.Count == 0)
+            {
+                return "source square invalid";
+            }
+            squarePosition = new ChessboardPosition(xto, yto);
+            if (!possibleMoves.Exists(obj => obj.X == squarePosition.X && obj.Y == squarePosition.Y))
+            {
+                return "destination square invalid";
+            }
+            MakeMove();
+            squareSelected.setNone();
+            possibleMoves.Clear();
+
+            return "success";
         }
 
         void MakeMove()

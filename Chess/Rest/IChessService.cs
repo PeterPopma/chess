@@ -17,12 +17,15 @@ namespace Chess
         XElement GetChessboard();
         [OperationContract]
         [WebGet]
-        string GetPossibleMoves();
+        XElement GetMoveablePositions();
+        [OperationContract]
+        [WebGet(UriTemplate = "GetPossibleMoves?x={x}&y={y}")]
+        XElement GetPossibleMoves(int x, int y);
         [OperationContract]
         [WebGet]
         XElement GetCurrentPlayer();
         [OperationContract]
-        [WebInvoke]
-        string PostMove(string inputMessage);
+        [WebInvoke(UriTemplate = "Move?xfrom={xfrom}&yfrom={yfrom}&xto={xto}&yto={yto}")]
+        XElement Move(int xfrom, int yfrom, int xto, int yto);
     }
 }

@@ -1,4 +1,5 @@
-﻿using Chess.CustomControls;
+﻿using Chess.Chess;
+using Chess.CustomControls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,6 +52,7 @@ namespace Chess
             return root;
         }
 
+
         public XElement GetCurrentPlayer()
         {
             XElement root = new XElement("Player");
@@ -58,14 +60,47 @@ namespace Chess
             root.Add(elColor);
             return root;
         }
+        public XElement GetMoveablePositions()
+        {
+            List<ChessboardPosition> pieces = displayMonogame.GetMoveablePositions();
+            XElement root = new XElement("MoveablePositions");
+            foreach(ChessboardPosition position in pieces)
+            {
+                XElement elChesspiece = new XElement("Position");
+                root.Add(elChesspiece);
+                XAttribute attribX = new XAttribute("x", position.X);
+                elChesspiece.Add(attribX);
+                XAttribute attribY = new XAttribute("y", position.Y);
+                elChesspiece.Add(attribY);
+            }
 
-        public string GetPossibleMoves()
-        {
-            return "Calling Get for you ";
+            return root;
         }
-        public string PostMove(string inputMessage)
+
+        public XElement GetPossibleMoves(int x, int y)
         {
-            return "Calling Post for you " + inputMessage;
+            List<ChessboardPosition> moves = displayMonogame.CheckPossibleMoves(x, y);
+            XElement root = new XElement("PossibleMoves");
+            foreach (ChessboardPosition position in moves)
+            {
+                XElement elChesspiece = new XElement("Position");
+                root.Add(elChesspiece);
+                XAttribute attribX = new XAttribute("x", position.X);
+                elChesspiece.Add(attribX);
+                XAttribute attribY = new XAttribute("y", position.Y);
+                elChesspiece.Add(attribY);
+            }
+
+            return root;
+        }
+
+        public XElement Move(int xfrom, int yfrom, int xto, int yto)
+        {
+            XElement root = new XElement("Move");
+            string result = displayMonogame.MakeMove(xfrom, yfrom, xto, yto);
+            XAttribute attribResult = new XAttribute("result", result);
+            root.Add(result);
+            return root;
         }
     }
 }
