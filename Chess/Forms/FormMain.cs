@@ -32,7 +32,6 @@ namespace Chess.Forms
         private void OnTimedEventUpdateScreen(object sender, EventArgs eArgs)
         {
             displayMonogame.UpdateFrame();
-            displayMonogame.UpdateScreen();
         }
 
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)

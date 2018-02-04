@@ -11,6 +11,7 @@ using Chess.Forms;
 using System.Threading;
 using Chess.Chess;
 using static Chess.Chess.ChessPiece;
+using System.Diagnostics;
 
 namespace Chess.CustomControls
 {
@@ -34,13 +35,18 @@ namespace Chess.CustomControls
         ChessPiece previousPieceTo;
         List<ChessboardPosition> possibleMoves = new List<ChessboardPosition>();
         ChessPiece[,] chessBoard = new ChessPiece[8, 8];
+        List<ChessPiece> missingPieces = new List<ChessPiece>();
         bool activePlayer;
         const bool PlayerWhite = true;
         const bool PlayerBlack = false;
+        const int ChessSquareSize = 120;
 
+        SmokePlumeParticleSystem smokePlume;
         SpriteBatch spriteBatch;
+        Stopwatch stopwatch;
+        double lastTimeMillisecs;
 
-        Texture2D textureChessboard;
+         Texture2D textureChessboard;
         Texture2D textureSelect;
         Texture2D textureSelected;
         Texture2D texturePossibleMove;
@@ -109,6 +115,15 @@ namespace Chess.CustomControls
 
             parentForm.labelMessage.Text = "";
 
+            // we'll see lots of these effects at once; this is ok
+            // because they have a fairly small number of particles per effect.
+            smokePlume = new SmokePlumeParticleSystem(spriteBatch, 20);    // max 20 smokes at once
+            smokePlume.Initialize();
+            smokePlume.LoadContent(contentManager);
+
+            stopwatch = new Stopwatch();
+            stopwatch.Stop();
+
             InitGame();
         }
 
@@ -160,8 +175,12 @@ namespace Chess.CustomControls
             ChessBoard[6, 7] = new ChessPiece(ChessPieceType.Horse, ChessPieceColor.White);
             ChessBoard[7, 7] = new ChessPiece(ChessPieceType.Rook, ChessPieceColor.White);
 
+            missingPieces.Clear();
+
+
             ActivePlayer = PlayerWhite;
             UpdateMessage();
+            stopwatch.Restart();
         }
 
         BlendState BlendStateSelection = new BlendState()
@@ -219,12 +238,55 @@ namespace Chess.CustomControls
             {
                 for (int x = 0; x < 8; x++)
                 {
-                    if (!ChessBoard[x, y].Type.Equals(ChessPieceType.None))
+                    ChessPiece piece = ChessBoard[x, y];
+                    if( piece.XAdjust>0)
                     {
-                        Texture2D texture = getTextureByName(ChessBoard[x, y].PieceName, ChessBoard[x, y].IsWhite);
-                        spriteBatch.Draw(texture, new Rectangle(x * 120 + 58, y * 120 - 10, texture.Width, texture.Height), Color.White);
+                        ChessBoard[x, y].XAdjust-=4;
+                    }
+                    if (piece.XAdjust < 0)
+                    {
+                        ChessBoard[x, y].XAdjust+=4;
+                    }
+                    if (piece.YAdjust > 0)
+                    {
+                        ChessBoard[x, y].YAdjust-=4;
+                    }
+                    if (piece.YAdjust < 0)
+                    {
+                        ChessBoard[x, y].YAdjust+=4;
+                    }
+
+                    if (!piece.Type.Equals(ChessPieceType.None))
+                    {
+                        Texture2D texture = getTextureByName(piece.PieceName, piece.IsWhite);
+                        spriteBatch.Draw(texture, new Rectangle(x * ChessSquareSize + 58 + piece.XAdjust, y * ChessSquareSize - 10 + piece.YAdjust, texture.Width, texture.Height), Color.White);
                     }
                 }
+            }
+        }
+
+        void DrawMissingPieces()
+        {
+            missingPieces = missingPieces.OrderBy(o=>o.Type).ToList();
+            int x = 0;
+            foreach (ChessPiece piece in missingPieces)
+            {
+                if(piece.IsWhite)
+                {
+                    Texture2D texture = getTextureByName(piece.PieceName, piece.IsWhite);
+                    spriteBatch.Draw(texture, new Rectangle(x, 700, texture.Width, texture.Height), Color.White);
+                }
+                x += 40;
+            }
+            x = 700;
+            foreach (ChessPiece piece in missingPieces)
+            {
+                if (!piece.IsWhite)
+                {
+                    Texture2D texture = getTextureByName(piece.PieceName, piece.IsWhite);
+                    spriteBatch.Draw(texture, new Rectangle(x, 700, texture.Width, texture.Height), Color.White);
+                }
+                x += 40;
             }
         }
 
@@ -239,21 +301,21 @@ namespace Chess.CustomControls
 
                 if (!squareSelected.IsNone)
                 {
-                    spriteBatch.Draw(textureSelected, new Rectangle(29 + (squareSelected.X) * 120, 29 + (squareSelected.Y) * 120, textureSelected.Width, textureSelected.Height), Color.White);
+                    spriteBatch.Draw(textureSelected, new Rectangle(29 + (squareSelected.X) * ChessSquareSize, 29 + (squareSelected.Y) * ChessSquareSize, textureSelected.Width, textureSelected.Height), Color.White);
                 }
 
                 if (possibleMoves.Count > 0)
                 {
                     if (possibleMoves.Exists(obj => obj.X == squarePosition.X && obj.Y == squarePosition.Y))
                     {
-                        spriteBatch.Draw(textureSelect, new Rectangle(29 + (squarePosition.X) * 120, 29 + (squarePosition.Y) * 120, textureSelect.Width, textureSelect.Height), Color.White);
+                        spriteBatch.Draw(textureSelect, new Rectangle(29 + (squarePosition.X) * ChessSquareSize, 29 + (squarePosition.Y) * ChessSquareSize, textureSelect.Width, textureSelect.Height), Color.White);
                     }
                 }
                 else
                 {
                     if (!squarePossible.IsNone)
                     {
-                        spriteBatch.Draw(textureSelect, new Rectangle(29 + (squarePossible.X) * 120, 29 + (squarePossible.Y) * 120, textureSelect.Width, textureSelect.Height), Color.White);
+                        spriteBatch.Draw(textureSelect, new Rectangle(29 + (squarePossible.X) * ChessSquareSize, 29 + (squarePossible.Y) * ChessSquareSize, textureSelect.Width, textureSelect.Height), Color.White);
                     }
                 }
 
@@ -261,13 +323,17 @@ namespace Chess.CustomControls
                 {
                     if (!(move.X == squarePosition.X && move.Y == squarePosition.Y))
                     {
-                        spriteBatch.Draw(texturePossibleMove, new Rectangle(29 + (move.X) * 120, 29 + (move.Y) * 120, texturePossibleMove.Width, texturePossibleMove.Height), Color.White);
+                        spriteBatch.Draw(texturePossibleMove, new Rectangle(29 + (move.X) * ChessSquareSize, 29 + (move.Y) * ChessSquareSize, texturePossibleMove.Width, texturePossibleMove.Height), Color.White);
                     }
                 }
 
                 DrawChessPieces();
+                DrawMissingPieces();
+
+                smokePlume.DrawSmoke();
 
                 spriteBatch.End();
+
             }
             catch (System.NullReferenceException e)
             {
@@ -284,12 +350,15 @@ namespace Chess.CustomControls
 
         public void UpdateFrame()
         {
+            smokePlume.Update((float)(stopwatch.Elapsed.TotalMilliseconds - lastTimeMillisecs)/1000.0f);
+            lastTimeMillisecs = stopwatch.Elapsed.TotalMilliseconds;
             HandleInput();
-        }
-
-        public void UpdateScreen()
-        {
             Invalidate();
+
+            TimeSpan ts = stopwatch.Elapsed;
+            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}",
+                ts.Hours, ts.Minutes, ts.Seconds);
+            parentForm.labelGameTime.Text = elapsedTime;
         }
 
         List<ChessboardPosition> checkRookMoves(ChessboardPosition position, bool isWhite)
@@ -762,23 +831,28 @@ namespace Chess.CustomControls
 
         void PromotePawn(ChessboardPosition position, bool isWhite)
         {
-            if(CountPieces(ChessPieceType.Queen, isWhite)==0)
+            missingPieces.Add(new ChessPiece(ChessPieceType.Pawn, isWhite? ChessPieceColor.White : ChessPieceColor.Black, true));
+            if (CountPieces(ChessPieceType.Queen, isWhite)==0)
             {
+                missingPieces.Remove(missingPieces.Find(x => (x.IsWhite == isWhite && x.Type.Equals(ChessPieceType.Queen))));
                 ChessBoard[position.X, position.Y].Type = ChessPieceType.Queen;
                 return;
             }
             if (CountPieces(ChessPieceType.Rook, isWhite) < 2)
             {
+                missingPieces.Remove(missingPieces.Find(x => (x.IsWhite == isWhite && x.Type.Equals(ChessPieceType.Rook))));
                 ChessBoard[position.X, position.Y].Type = ChessPieceType.Rook;
                 return;
             }
             if (CountPieces(ChessPieceType.Bishop, isWhite) < 2)
             {
+                missingPieces.Remove(missingPieces.Find(x => (x.IsWhite == isWhite && x.Type.Equals(ChessPieceType.Bishop))));
                 ChessBoard[position.X, position.Y].Type = ChessPieceType.Bishop;
                 return;
             }
             if (CountPieces(ChessPieceType.Horse, isWhite) < 2)
             {
+                missingPieces.Remove(missingPieces.Find(x => (x.IsWhite == isWhite && x.Type.Equals(ChessPieceType.Horse))));
                 ChessBoard[position.X, position.Y].Type = ChessPieceType.Horse;
                 return;
             }
@@ -935,12 +1009,14 @@ namespace Chess.CustomControls
                     {
                         ChessBoard[3, 7] = ChessBoard[0, 7];
                         ChessBoard[3, 7].HasMoved = true;
+                        ChessBoard[3, 7].XAdjust = -ChessSquareSize * 3;
                         ChessBoard[0, 7] = new ChessPiece();
                     }
                     if (squareSelected.X == 4 && squareSelected.Y == 7 && squarePosition.X == 6 && squarePosition.Y == 7)
                     {
                         ChessBoard[5, 7] = ChessBoard[7, 7];
                         ChessBoard[5, 7].HasMoved = true;
+                        ChessBoard[5, 7].XAdjust = ChessSquareSize * 2;
                         ChessBoard[7, 7] = new ChessPiece();
                     }
                 }
@@ -950,12 +1026,14 @@ namespace Chess.CustomControls
                     {
                         ChessBoard[3, 0] = ChessBoard[0, 0];
                         ChessBoard[3, 0].HasMoved = true;
+                        ChessBoard[3, 0].XAdjust = -ChessSquareSize * 3;
                         ChessBoard[0, 0] = new ChessPiece();
                     }
                     if (squareSelected.X == 4 && squareSelected.Y == 0 && squarePosition.X == 6 && squarePosition.Y == 0)
                     {
                         ChessBoard[5, 0] = ChessBoard[7, 0];
                         ChessBoard[5, 0].HasMoved = true;
+                        ChessBoard[5, 0].XAdjust = ChessSquareSize * 2;
                         ChessBoard[7, 0] = new ChessPiece();
                     }
                 }
@@ -966,7 +1044,14 @@ namespace Chess.CustomControls
             previousPieceTo = new ChessPiece(selectedPiece.Type, selectedPiece.Color, selectedPiece.HasMoved);
 
             selectedPiece.HasMoved = true;
+            if (!ChessBoard[squarePosition.X, squarePosition.Y].IsNone)
+            {
+                missingPieces.Add(ChessBoard[squarePosition.X, squarePosition.Y]);
+                smokePlume.AddParticles(new Vector2(squarePosition.X * ChessSquareSize + 49, squarePosition.Y * ChessSquareSize + 71), Color.White);
+            }
             ChessBoard[squarePosition.X, squarePosition.Y] = selectedPiece;
+            ChessBoard[squarePosition.X, squarePosition.Y].XAdjust = ChessSquareSize * (squareSelected.X - squarePosition.X );
+            ChessBoard[squarePosition.X, squarePosition.Y].YAdjust = ChessSquareSize * (squareSelected.Y - squarePosition.Y);
             ChessBoard[squareSelected.X, squareSelected.Y] = new ChessPiece();
             CheckPawnPromotion(ActivePlayer);
             NextPlayer();
@@ -1044,8 +1129,8 @@ namespace Chess.CustomControls
             lastKeyboardState = currentKeyboardState;
             lastGamePadState = currentGamePadState;
             lastScrollWheelValue = scrollWheelValue;
-            squarePosition.X = (MousePosition.X - 49) / 120;
-            squarePosition.Y = (MousePosition.Y - 71) / 120;
+            squarePosition.X = (MousePosition.X - 49) / ChessSquareSize;
+            squarePosition.Y = (MousePosition.Y - 71) / ChessSquareSize;
             if(squarePosition.X<0 || squarePosition.Y < 0 || squarePosition.X >7 || squarePosition.Y > 7)
             {
                 squarePosition.setNone();

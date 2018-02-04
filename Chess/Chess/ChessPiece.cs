@@ -15,6 +15,8 @@ namespace Chess.Chess
         ChessPieceType type;
         ChessPieceColor color;
         bool hasMoved;
+        int xAdjust;
+        int yAdjust;
 
         public bool IsWhite { get => Color.Equals(ChessPieceColor.White); }
         public bool IsBlack { get => Color.Equals(ChessPieceColor.Black); }
@@ -24,6 +26,8 @@ namespace Chess.Chess
         internal ChessPieceType Type { get => type; set => type = value; }
         internal ChessPieceColor Color { get => color; set => color = value; }
         public bool HasMoved { get => hasMoved; set => hasMoved = value; }
+        public int XAdjust { get => xAdjust; set => xAdjust = value; }
+        public int YAdjust { get => yAdjust; set => yAdjust = value; }
 
         public ChessPiece(ChessPieceType type = ChessPieceType.None, ChessPieceColor color = ChessPieceColor.None, bool hasMoved=false)
         {
