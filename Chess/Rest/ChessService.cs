@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using static Chess.Chess.ChessPiece;
 
 namespace Chess
 {
@@ -53,13 +54,29 @@ namespace Chess
         }
 
 
-        public XElement GetCurrentPlayer()
+        // Returns gamestatus playing or finished
+        public XElement GetGameStatus()
         {
-            XElement root = new XElement("Player");
-            XElement elColor = new XElement("Color", displayMonogame.ActivePlayer ? "white" : "black");
-            root.Add(elColor);
+            XElement root = new XElement("GameStatus");
+            XAttribute attribColor, attribSatus;
+
+            if (displayMonogame.PlayerWon.Equals(ChessPieceColor.None))
+            {
+                attribColor = new XAttribute("player", displayMonogame.ActivePlayer ? "white" : "black");
+                attribSatus = new XAttribute("status", "playing");
+            }
+            else
+            {
+                attribColor = new XAttribute("player", displayMonogame.PlayerWon.Equals(ChessPieceColor.White)  ? "white" : "black");
+                attribSatus = new XAttribute("status", "won");
+            }
+
+            root.Add(attribSatus);
+            root.Add(attribColor);
+
             return root;
         }
+
         public XElement GetMoveablePositions()
         {
             List<ChessboardPosition> pieces = displayMonogame.GetMoveablePositions();

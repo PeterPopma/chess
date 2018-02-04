@@ -23,7 +23,7 @@ namespace Chess
         XElement GetPossibleMoves(int x, int y);
         [OperationContract]
         [WebGet]
-        XElement GetCurrentPlayer();
+        XElement GetGameStatus();
         [OperationContract]
         [WebInvoke(UriTemplate = "Move?xfrom={xfrom}&yfrom={yfrom}&xto={xto}&yto={yto}")]
         XElement Move(int xfrom, int yfrom, int xto, int yto);

@@ -40,13 +40,20 @@ namespace Chess.CustomControls
         const bool PlayerWhite = true;
         const bool PlayerBlack = false;
         const int ChessSquareSize = 120;
+        const int ChessboardStartX = 29;
+        const int ChessboardStartY = 29;
+        long maxMoveTimeMillisecs;
+        ChessPieceColor playerWon;
+        bool playingGame;
 
         SmokePlumeParticleSystem smokePlume;
         SpriteBatch spriteBatch;
         Stopwatch stopwatch;
         double lastTimeMillisecs;
+        double lastMoveMillisecs;
+        bool slidingMoves = false;
 
-         Texture2D textureChessboard;
+        Texture2D textureChessboard;
         Texture2D textureSelect;
         Texture2D textureSelected;
         Texture2D texturePossibleMove;
@@ -65,6 +72,10 @@ namespace Chess.CustomControls
         public FormMain ParentForm { get => parentForm; set => parentForm = value; }
         public ChessPiece[,] ChessBoard { get => chessBoard; set => chessBoard = value; }
         public bool ActivePlayer { get => activePlayer; set => activePlayer = value; }
+        public bool SlidingMoves { get => slidingMoves; set => slidingMoves = value; }
+        public long MaxMoveTimeMillisecs { get => maxMoveTimeMillisecs; set => maxMoveTimeMillisecs = value; }
+        public ChessPieceColor PlayerWon { get => playerWon; set => playerWon = value; }
+        public bool PlayingGame { get => playingGame; set => playingGame = value; }
 
         private void MouseWheelHandler(object sender, MouseEventArgs e)
         {
@@ -124,6 +135,8 @@ namespace Chess.CustomControls
             stopwatch = new Stopwatch();
             stopwatch.Stop();
 
+            MaxMoveTimeMillisecs = 100000;
+
             InitGame();
         }
 
@@ -177,10 +190,12 @@ namespace Chess.CustomControls
 
             missingPieces.Clear();
 
-
+            PlayerWon = ChessPieceColor.None;
             ActivePlayer = PlayerWhite;
             UpdateMessage();
             stopwatch.Restart();
+            lastMoveMillisecs = stopwatch.Elapsed.TotalMilliseconds;
+            PlayingGame = true;
         }
 
         BlendState BlendStateSelection = new BlendState()
@@ -267,31 +282,44 @@ namespace Chess.CustomControls
 
         void DrawMissingPieces()
         {
-            missingPieces = missingPieces.OrderBy(o=>o.Type).ToList();
-            int x = 0;
+            missingPieces = missingPieces.OrderByDescending(o=>o.Type).ToList();
+            int x = 1020, y = 300;
             foreach (ChessPiece piece in missingPieces)
             {
                 if(piece.IsWhite)
                 {
                     Texture2D texture = getTextureByName(piece.PieceName, piece.IsWhite);
-                    spriteBatch.Draw(texture, new Rectangle(x, 700, texture.Width, texture.Height), Color.White);
+                    spriteBatch.Draw(texture, new Rectangle(x, y, texture.Width, texture.Height), Color.White);
+                    x += 40;
+                    if (x > 1020 + 8 * 40)
+                    {
+                        x = 1020;
+                        y += 100;
+                    }
                 }
-                x += 40;
             }
-            x = 700;
+            x = 1020;
+            y = 500;
             foreach (ChessPiece piece in missingPieces)
             {
                 if (!piece.IsWhite)
                 {
                     Texture2D texture = getTextureByName(piece.PieceName, piece.IsWhite);
-                    spriteBatch.Draw(texture, new Rectangle(x, 700, texture.Width, texture.Height), Color.White);
+                    spriteBatch.Draw(texture, new Rectangle(x, y, texture.Width, texture.Height), Color.White);
+                    x += 40;
+                    if (x > 1020 + 8 * 40)
+                    {
+                        x = 1020;
+                        y += 100;
+                    }
                 }
-                x += 40;
             }
         }
 
         override protected void Draw()
         {
+            GraphicsDevice.Clear(Microsoft.Xna.Framework.Color.Black);
+
             try
             {
                 spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
@@ -301,21 +329,21 @@ namespace Chess.CustomControls
 
                 if (!squareSelected.IsNone)
                 {
-                    spriteBatch.Draw(textureSelected, new Rectangle(29 + (squareSelected.X) * ChessSquareSize, 29 + (squareSelected.Y) * ChessSquareSize, textureSelected.Width, textureSelected.Height), Color.White);
+                    spriteBatch.Draw(textureSelected, new Rectangle(ChessboardStartX + (squareSelected.X) * ChessSquareSize, ChessboardStartY + (squareSelected.Y) * ChessSquareSize, textureSelected.Width, textureSelected.Height), Color.White);
                 }
 
                 if (possibleMoves.Count > 0)
                 {
                     if (possibleMoves.Exists(obj => obj.X == squarePosition.X && obj.Y == squarePosition.Y))
                     {
-                        spriteBatch.Draw(textureSelect, new Rectangle(29 + (squarePosition.X) * ChessSquareSize, 29 + (squarePosition.Y) * ChessSquareSize, textureSelect.Width, textureSelect.Height), Color.White);
+                        spriteBatch.Draw(textureSelect, new Rectangle(ChessboardStartX + (squarePosition.X) * ChessSquareSize, ChessboardStartY + (squarePosition.Y) * ChessSquareSize, textureSelect.Width, textureSelect.Height), Color.White);
                     }
                 }
                 else
                 {
                     if (!squarePossible.IsNone)
                     {
-                        spriteBatch.Draw(textureSelect, new Rectangle(29 + (squarePossible.X) * ChessSquareSize, 29 + (squarePossible.Y) * ChessSquareSize, textureSelect.Width, textureSelect.Height), Color.White);
+                        spriteBatch.Draw(textureSelect, new Rectangle(ChessboardStartX + (squarePossible.X) * ChessSquareSize, ChessboardStartY + (squarePossible.Y) * ChessSquareSize, textureSelect.Width, textureSelect.Height), Color.White);
                     }
                 }
 
@@ -323,7 +351,7 @@ namespace Chess.CustomControls
                 {
                     if (!(move.X == squarePosition.X && move.Y == squarePosition.Y))
                     {
-                        spriteBatch.Draw(texturePossibleMove, new Rectangle(29 + (move.X) * ChessSquareSize, 29 + (move.Y) * ChessSquareSize, texturePossibleMove.Width, texturePossibleMove.Height), Color.White);
+                        spriteBatch.Draw(texturePossibleMove, new Rectangle(ChessboardStartX + (move.X) * ChessSquareSize, ChessboardStartY + (move.Y) * ChessSquareSize, texturePossibleMove.Width, texturePossibleMove.Height), Color.White);
                     }
                 }
 
@@ -350,6 +378,11 @@ namespace Chess.CustomControls
 
         public void UpdateFrame()
         {
+            if (!PlayingGame)
+            {
+                return;
+            }
+
             smokePlume.Update((float)(stopwatch.Elapsed.TotalMilliseconds - lastTimeMillisecs)/1000.0f);
             lastTimeMillisecs = stopwatch.Elapsed.TotalMilliseconds;
             HandleInput();
@@ -359,6 +392,32 @@ namespace Chess.CustomControls
             string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}",
                 ts.Hours, ts.Minutes, ts.Seconds);
             parentForm.labelGameTime.Text = elapsedTime;
+
+            ts = new TimeSpan(10000 * (long)(stopwatch.Elapsed.TotalMilliseconds - lastMoveMillisecs));
+            elapsedTime = String.Format("{0:00}:{1:00}:{2:00}",
+                ts.Hours, ts.Minutes, ts.Seconds);
+            parentForm.labelMoveTime.Text = elapsedTime;
+
+            if ((long)(stopwatch.Elapsed.TotalMilliseconds - lastMoveMillisecs) > maxMoveTimeMillisecs)
+            {
+                squareSelected.setNone();
+                possibleMoves.Clear();
+                lastMoveMillisecs = stopwatch.Elapsed.TotalMilliseconds;
+                if (parentForm.labelMessage.Text.Equals("Check!"))       // player was in check and did not move.. he lost!
+                {
+                    if (ActivePlayer == PlayerWhite)
+                        PlayerWon = ChessPieceColor.Black;
+                    else
+                        PlayerWon = ChessPieceColor.White;
+                    PlayingGame = false;
+                    parentForm.labelMessage.Text = "Checkmate!";
+                }
+                else
+                {
+                    NextPlayer();
+                    UpdateMessage();
+                }
+            }
         }
 
         List<ChessboardPosition> checkRookMoves(ChessboardPosition position, bool isWhite)
@@ -871,7 +930,7 @@ namespace Chess.CustomControls
                 }
                 else
                 {
-                    if (ChessBoard[x, 7].Type.Equals(ChessPieceType.Pawn) && ChessBoard[x, 0].IsBlack)
+                    if (ChessBoard[x, 7].Type.Equals(ChessPieceType.Pawn) && ChessBoard[x, 7].IsBlack)
                     {
                         PromotePawn(new ChessboardPosition(x, 7), isWhite);
                     }
@@ -921,6 +980,12 @@ namespace Chess.CustomControls
                     }
                 }
             }
+
+            if (ActivePlayer == PlayerWhite)
+                PlayerWon = ChessPieceColor.Black;
+            else
+                PlayerWon = ChessPieceColor.White;
+            PlayingGame = false;
 
             return true;
         }
@@ -1009,14 +1074,16 @@ namespace Chess.CustomControls
                     {
                         ChessBoard[3, 7] = ChessBoard[0, 7];
                         ChessBoard[3, 7].HasMoved = true;
-                        ChessBoard[3, 7].XAdjust = -ChessSquareSize * 3;
+                        if(slidingMoves)
+                            ChessBoard[3, 7].XAdjust = -ChessSquareSize * 3;
                         ChessBoard[0, 7] = new ChessPiece();
                     }
                     if (squareSelected.X == 4 && squareSelected.Y == 7 && squarePosition.X == 6 && squarePosition.Y == 7)
                     {
                         ChessBoard[5, 7] = ChessBoard[7, 7];
                         ChessBoard[5, 7].HasMoved = true;
-                        ChessBoard[5, 7].XAdjust = ChessSquareSize * 2;
+                        if (slidingMoves)
+                            ChessBoard[5, 7].XAdjust = ChessSquareSize * 2;
                         ChessBoard[7, 7] = new ChessPiece();
                     }
                 }
@@ -1026,14 +1093,16 @@ namespace Chess.CustomControls
                     {
                         ChessBoard[3, 0] = ChessBoard[0, 0];
                         ChessBoard[3, 0].HasMoved = true;
-                        ChessBoard[3, 0].XAdjust = -ChessSquareSize * 3;
+                        if (slidingMoves)
+                            ChessBoard[3, 0].XAdjust = -ChessSquareSize * 3;
                         ChessBoard[0, 0] = new ChessPiece();
                     }
                     if (squareSelected.X == 4 && squareSelected.Y == 0 && squarePosition.X == 6 && squarePosition.Y == 0)
                     {
                         ChessBoard[5, 0] = ChessBoard[7, 0];
                         ChessBoard[5, 0].HasMoved = true;
-                        ChessBoard[5, 0].XAdjust = ChessSquareSize * 2;
+                        if (slidingMoves)
+                            ChessBoard[5, 0].XAdjust = ChessSquareSize * 2;
                         ChessBoard[7, 0] = new ChessPiece();
                     }
                 }
@@ -1050,12 +1119,16 @@ namespace Chess.CustomControls
                 smokePlume.AddParticles(new Vector2(squarePosition.X * ChessSquareSize + 49, squarePosition.Y * ChessSquareSize + 71), Color.White);
             }
             ChessBoard[squarePosition.X, squarePosition.Y] = selectedPiece;
-            ChessBoard[squarePosition.X, squarePosition.Y].XAdjust = ChessSquareSize * (squareSelected.X - squarePosition.X );
-            ChessBoard[squarePosition.X, squarePosition.Y].YAdjust = ChessSquareSize * (squareSelected.Y - squarePosition.Y);
+            if (slidingMoves)
+            {
+                ChessBoard[squarePosition.X, squarePosition.Y].XAdjust = ChessSquareSize * (squareSelected.X - squarePosition.X);
+                ChessBoard[squarePosition.X, squarePosition.Y].YAdjust = ChessSquareSize * (squareSelected.Y - squarePosition.Y);
+            }
             ChessBoard[squareSelected.X, squareSelected.Y] = new ChessPiece();
             CheckPawnPromotion(ActivePlayer);
             NextPlayer();
             UpdateMessage();
+            lastMoveMillisecs = stopwatch.Elapsed.TotalMilliseconds;
         }
 
         void UpdateMessage()
@@ -1129,8 +1202,8 @@ namespace Chess.CustomControls
             lastKeyboardState = currentKeyboardState;
             lastGamePadState = currentGamePadState;
             lastScrollWheelValue = scrollWheelValue;
-            squarePosition.X = (MousePosition.X - 49) / ChessSquareSize;
-            squarePosition.Y = (MousePosition.Y - 71) / ChessSquareSize;
+            squarePosition.X = (PointToClient(MousePosition).X - ChessboardStartX) / ChessSquareSize;
+            squarePosition.Y = (PointToClient(MousePosition).Y - ChessboardStartY) / ChessSquareSize;
             if(squarePosition.X<0 || squarePosition.Y < 0 || squarePosition.X >7 || squarePosition.Y > 7)
             {
                 squarePosition.setNone();

@@ -54,5 +54,15 @@ namespace Chess.Forms
         {
             displayMonogame.UndoLastMove();
         }
+
+        private void checkBoxSliding_CheckedChanged(object sender, EventArgs e)
+        {
+            displayMonogame.SlidingMoves = checkBoxSliding.Checked;
+        }
+
+        private void numericUpDownMaxMoveTime_ValueChanged(object sender, EventArgs e)
+        {
+            displayMonogame.MaxMoveTimeMillisecs = (long)((numericUpDownMaxMoveTime.Value+1) * 1000);
+        }
     }
 }
